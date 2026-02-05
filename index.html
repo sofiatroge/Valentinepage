@@ -287,8 +287,9 @@
     </div>
 
     <script>
-        // ⚙️ CONFIGURATION - Replace with your webhook URL
-        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1469072220965048445/Rf4S2H-IeLTKMsM__bmHZ4kXkDgw25Fb1E4hsiED1WNdbMGUdyFiG3cfDp8uw5hsEUeA';
+        // ⚙️ CONFIGURATION - Replace with your Discord webhook URL
+        // IMPORTANT: Discord webhooks have CORS restrictions, so we use a proxy
+        const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1469072220965048445/Rf4S2H-IeLTKMsM__bmHZ4kXkDgw25Fb1E4hsiED1WNdbMGUdyFiG3cfDp8uw5hsEUeA';
         
         let noClickCount = 0;
         const noMessages = [
@@ -299,43 +300,72 @@
             "You know you want to say yes... 😊"
         ];
 
-        // Send notification function
+        // Send notification function with CORS proxy
         async function sendNotification(action, details = {}) {
-            if (!WEBHOOK_URL || WEBHOOK_URL === 'YOUR_WEBHOOK_URL_HERE') {
-                return; // Skip if webhook not configured
+            if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
+                console.log('⚠️ Webhook not configured');
+                return;
             }
 
-            const data = {
-                action: action,
-                timestamp: new Date().toISOString(),
-                ...details
-            };
+            const timestamp = new Date().toLocaleString();
+            let message = '';
+            
+            if (action === 'page_opened') {
+                message = `💕 **Someone opened your Valentine page!**\n🕐 Time: ${timestamp}`;
+            } else if (action === 'clicked_yes') {
+                message = `🎉 **HE SAID YES!!!** 💕💕💕\n🕐 Time: ${timestamp}`;
+            } else if (action === 'clicked_no') {
+                message = `💔 He clicked "Let me think..." (Attempt ${details.clickCount})\n🕐 Time: ${timestamp}`;
+            }
+
+            // Using a CORS proxy to send to Discord
+            const proxyUrl = 'https://corsproxy.io/?';
+            const url = proxyUrl + encodeURIComponent(DISCORD_WEBHOOK);
 
             try {
-                await fetch(WEBHOOK_URL, {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify({
+                        content: message,
+                        username: 'Valentine Tracker',
+                        avatar_url: 'https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png'
+                    })
                 });
+                
+                if (response.ok) {
+                    console.log('✅ Notification sent successfully!');
+                } else {
+                    console.log('⚠️ Notification failed:', response.status);
+                }
             } catch (error) {
-                console.log('Notification sent!');
+                console.log('⚠️ Error sending notification:', error);
+                // Fallback: try without proxy (might work in some browsers)
+                try {
+                    await fetch(DISCORD_WEBHOOK, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: message,
+                            username: 'Valentine Tracker'
+                        })
+                    });
+                } catch (e) {
+                    console.log('⚠️ Direct method also failed');
+                }
             }
         }
 
         // Send page view notification when page loads
         window.addEventListener('load', () => {
-            sendNotification('page_opened', {
-                message: '💕 Someone opened the Valentine page!'
-            });
+            sendNotification('page_opened');
         });
 
         function handleYes() {
             // Send YES notification! 🎉
-            sendNotification('clicked_yes', {
-                message: '🎉 HE SAID YES!!! 💕💕💕'
-            });
+            sendNotification('clicked_yes');
             
             const responseDiv = document.getElementById('response');
             responseDiv.innerHTML = `
@@ -356,7 +386,6 @@
             
             // Send NO notification
             sendNotification('clicked_no', {
-                message: `💔 He clicked "No" (attempt ${noClickCount + 1})`,
                 clickCount: noClickCount + 1
             });
             
