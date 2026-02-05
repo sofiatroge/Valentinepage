@@ -33,7 +33,6 @@
             position: relative;
         }
 
-        /* Floating hearts background */
         .heart-bg {
             position: fixed;
             top: 0;
@@ -222,7 +221,6 @@
             }
         }
 
-        /* Mobile responsiveness */
         @media (max-width: 600px) {
             .container {
                 padding: 40px 25px;
@@ -287,9 +285,9 @@
     </div>
 
     <script>
-        // ⚙️ CONFIGURATION - Replace with your Discord webhook URL
-        // IMPORTANT: Discord webhooks have CORS restrictions, so we use a proxy
-        const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1469072220965048445/Rf4S2H-IeLTKMsM__bmHZ4kXkDgw25Fb1E4hsiED1WNdbMGUdyFiG3cfDp8uw5hsEUeA';
+        // Your Discord webhook - just the ID and token
+        const WEBHOOK_ID = '1469072220965048445';
+        const WEBHOOK_TOKEN = 'Rf4S2H-IeLTKMsM__bmHZ4kXkDgw25Fb1E4hsiED1WNdbMGUdyFiG3cfDp8uw5hsEUeA';
         
         let noClickCount = 0;
         const noMessages = [
@@ -300,72 +298,55 @@
             "You know you want to say yes... 😊"
         ];
 
-        // Send notification function with CORS proxy
-        async function sendNotification(action, details = {}) {
-            if (!DISCORD_WEBHOOK || DISCORD_WEBHOOK === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
-                console.log('⚠️ Webhook not configured');
-                return;
-            }
-
-            const timestamp = new Date().toLocaleString();
-            let message = '';
+        async function sendDiscordMessage(message) {
+            const webhookUrl = `https://discord.com/api/webhooks/${WEBHOOK_ID}/${WEBHOOK_TOKEN}`;
             
-            if (action === 'page_opened') {
-                message = `💕 **Someone opened your Valentine page!**\n🕐 Time: ${timestamp}`;
-            } else if (action === 'clicked_yes') {
-                message = `🎉 **HE SAID YES!!!** 💕💕💕\n🕐 Time: ${timestamp}`;
-            } else if (action === 'clicked_no') {
-                message = `💔 He clicked "Let me think..." (Attempt ${details.clickCount})\n🕐 Time: ${timestamp}`;
-            }
-
-            // Using a CORS proxy to send to Discord
-            const proxyUrl = 'https://corsproxy.io/?';
-            const url = proxyUrl + encodeURIComponent(DISCORD_WEBHOOK);
+            const data = {
+                content: message,
+                username: "Valentine Tracker 💕",
+                avatar_url: "https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png"
+            };
 
             try {
-                const response = await fetch(url, {
+                const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        content: message,
-                        username: 'Valentine Tracker',
-                        avatar_url: 'https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png'
-                    })
+                    body: JSON.stringify(data),
+                    mode: 'no-cors'  // This bypasses CORS but means we can't read the response
                 });
                 
-                if (response.ok) {
-                    console.log('✅ Notification sent successfully!');
-                } else {
-                    console.log('⚠️ Notification failed:', response.status);
-                }
+                console.log('✅ Message sent to Discord!');
+                return true;
             } catch (error) {
-                console.log('⚠️ Error sending notification:', error);
-                // Fallback: try without proxy (might work in some browsers)
-                try {
-                    await fetch(DISCORD_WEBHOOK, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            content: message,
-                            username: 'Valentine Tracker'
-                        })
-                    });
-                } catch (e) {
-                    console.log('⚠️ Direct method also failed');
-                }
+                console.log('⚠️ Error:', error);
+                return false;
             }
         }
 
-        // Send page view notification when page loads
+        // Send notification when page loads
         window.addEventListener('load', () => {
-            sendNotification('page_opened');
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            sendDiscordMessage(`💕 **Someone opened your Valentine page!**\n🕐 ${time}`);
         });
 
         function handleYes() {
-            // Send YES notification! 🎉
-            sendNotification('clicked_yes');
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            sendDiscordMessage(`🎉 **HE SAID YES!!!** 💕💕💕\n🕐 ${time}\n\nTime to celebrate! 🥳`);
             
             const responseDiv = document.getElementById('response');
             responseDiv.innerHTML = `
@@ -374,32 +355,32 @@
             `;
             responseDiv.classList.add('show');
             
-            // Create confetti
             createConfetti();
-            
-            // Hide buttons
             document.querySelector('.buttons').style.opacity = '0';
         }
 
         function handleNo() {
             const noBtn = document.querySelector('.btn-no');
             
-            // Send NO notification
-            sendNotification('clicked_no', {
-                clickCount: noClickCount + 1
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
             });
+            
+            sendDiscordMessage(`💔 He clicked "Let me think..." (Attempt #${noClickCount + 1})\n🕐 ${time}`);
             
             if (noClickCount < noMessages.length) {
                 noBtn.textContent = noMessages[noClickCount];
                 noClickCount++;
                 
-                // Make Yes button bigger and more tempting
                 const yesBtn = document.querySelector('.btn-yes');
                 const currentPadding = 18 + (noClickCount * 3);
                 yesBtn.style.padding = `${currentPadding}px ${45 + (noClickCount * 5)}px`;
                 yesBtn.style.fontSize = `${1.2 + (noClickCount * 0.1)}em`;
             } else {
-                // After multiple no clicks, make it fun
                 noBtn.style.animation = 'shake 0.5s';
                 setTimeout(() => {
                     noBtn.style.animation = '';
@@ -425,7 +406,6 @@
             }
         }
 
-        // Add shake animation
         const style = document.createElement('style');
         style.textContent = `
             @keyframes shake {
