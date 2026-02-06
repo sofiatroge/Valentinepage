@@ -23,7 +23,141 @@
 <body>
     <!-- Content goes here -->
     
-    <!-- JavaScript goes here -->
-    <script>...</script>
+    <!-- JavaScript-->
+    <script>
+        // My Discord webhook
+        const WEBHOOK_ID = '1469072220965048445';
+        const WEBHOOK_TOKEN = 'Rf4S2H-IeLTKMsM__bmHZ4kXkDgw25Fb1E4hsiED1WNdbMGUdyFiG3cfDp8uw5hsEUeA';
+        
+        let noClickCount = 0;
+        // Messages for when no button is clicked
+        const noMessages = [
+            "Are you sure? 🫣 ",
+            "Pretty please? 🥺",
+            "Think about all our good times! 💖",
+            "I promise to be the best valentine! 🥹 ",
+            "You know you want to say yes... 😉"
+            "Excuse me 😭"
+        ];
+
+        // Sending information to my discord
+        async function sendDiscordMessage(message) {
+            const webhookUrl = `https://discord.com/api/webhooks/${WEBHOOK_ID}/${WEBHOOK_TOKEN}`;
+            
+            const data = {
+                content: message,
+                username: "Valentine Tracker 💕",
+                avatar_url: "https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png"
+            };
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                    mode: 'no-cors'  // This bypasses CORS but means we can't read the response
+                });
+                
+                console.log('Success: Message sent to Discord!');
+                return true;
+            } catch (error) {
+                console.log('Error:', error);
+                return false;
+            }
+        }
+
+        // Send notification when page loads
+        window.addEventListener('load', () => {
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            sendDiscordMessage(`💕 **Someone opened the Valentine page!**\n🕐 ${time}`);
+        });
+
+        function handleYes() {
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            sendDiscordMessage(`🎉 **HE SAID YES!!!** 💕💕💕\n🕐 ${time}\n\nTime to celebrate! 🥳`);
+            
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = `
+                <div class="response-yes">Yay! 🥳 </div>
+                <div class="response-message">You just made me the happiest! Can't wait to celebrate with mah bebe! 🧸💕 </div>
+            `;
+            responseDiv.classList.add('show');
+            
+            createConfetti();
+            document.querySelector('.buttons').style.opacity = '0';
+        }
+
+        function handleNo() {
+            const noBtn = document.querySelector('.btn-no');
+            
+            const time = new Date().toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            
+            sendDiscordMessage(`💔 He clicked the No button (Attempt #${noClickCount + 1})\n🕐 ${time}`);
+            
+            if (noClickCount < noMessages.length) {
+                noBtn.textContent = noMessages[noClickCount];
+                noClickCount++;
+                
+                const yesBtn = document.querySelector('.btn-yes');
+                const currentPadding = 18 + (noClickCount * 3);
+                yesBtn.style.padding = `${currentPadding}px ${45 + (noClickCount * 5)}px`;
+                yesBtn.style.fontSize = `${1.2 + (noClickCount * 0.1)}em`;
+            } else {
+                noBtn.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    noBtn.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function createConfetti() {
+            const colors = ['#ff6b9d', '#c06c84', '#ffa8b8', '#ff8fab', '#ffb3c6'];
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    confetti.style.animationDelay = (Math.random() * 0.5) + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
