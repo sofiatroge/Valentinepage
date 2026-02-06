@@ -281,7 +281,7 @@
         <p class="message">
             You make every day brighter, every moment so sweet,
             My heart overflows every time that we meet.
-            So this Valentine’s Day, I’ll ask you once more:
+            So this Valentine's Day, I'll ask you once more:
             Will you be my Valentine, for the fourth time in a row? 🥰
         </p>
         
@@ -309,34 +309,31 @@
             "Excuse me 😭"
         ];
 
-        // Sending information to my discord
+        // FIXED Discord webhook function - removed username and avatar_url which can cause 400 errors
         async function sendDiscordMessage(message) {
             const webhookUrl = `https://discord.com/api/webhooks/${WEBHOOK_ID}/${WEBHOOK_TOKEN}`;
 
-            const data = {
-                content: message,
-                username: "Valentine Tracker 💕",
-                avatar_url: "https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png"
-            };
-            
             try {
-                // Try with no-cors first
-                await fetch(webhookUrl, {
+                const response = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(data),
-                    mode: 'no-cors'
+                    body: JSON.stringify({
+                        content: message
+                    })
                 });
-                console.log('✅ Message sent to Discord (no-cors mode)');
                 
-                // Also try logging locally to verify function runs
-                console.log('📝 Message content:', message);
-                return true;
+                if (response.ok) {
+                    console.log('✅ Message successfully sent to Discord!');
+                    return true;
+                } else {
+                    console.error('❌ Discord error:', response.status);
+                    return false;
+                }
             } catch (error) {
-                console.error('❌ Discord webhook error:', error);
-                return false
+                console.error('❌ Error:', error);
+                return false;
             }
         }
 
@@ -349,7 +346,7 @@
                 minute: '2-digit',
                 hour12: true 
             });
-            sendDiscordMessage(`💕 **Someone opened the Valentine page!**\n🕐 ${time}`);
+            sendDiscordMessage(`💕 Someone opened the Valentine page! (${time})`);
         });
 
         function handleYes() {
@@ -361,7 +358,7 @@
                 hour12: true 
             });
             
-            sendDiscordMessage(`🎉 **HE SAID YES!!!** 💕💕💕\n🕐 ${time}\n\nTime to celebrate! 🥳`);
+            sendDiscordMessage(`🎉 HE SAID YES!!! 💕💕💕 (${time}) Time to celebrate! 🥳`);
             
             const responseDiv = document.getElementById('response');
             responseDiv.innerHTML = `
@@ -385,7 +382,7 @@
                 hour12: true 
             });
             
-            sendDiscordMessage(`💔 He clicked the No button (Attempt #${noClickCount + 1})\n🕐 ${time}`);
+            sendDiscordMessage(`💔 He clicked No button - Attempt ${noClickCount + 1} (${time})`);
             
             if (noClickCount < noMessages.length) {
                 noBtn.textContent = noMessages[noClickCount];
