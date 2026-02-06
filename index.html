@@ -312,28 +312,31 @@
         // Sending information to my discord
         async function sendDiscordMessage(message) {
             const webhookUrl = `https://discord.com/api/webhooks/${WEBHOOK_ID}/${WEBHOOK_TOKEN}`;
-            
+
             const data = {
                 content: message,
                 username: "Valentine Tracker 💕",
                 avatar_url: "https://em-content.zobj.net/thumbs/240/apple/354/beating-heart_1f493.png"
             };
-
+            
             try {
-                const response = await fetch(webhookUrl, {
+                // Try with no-cors first
+                await fetch(webhookUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(data),
-                    mode: 'no-cors'  // This bypasses CORS but means we can't read the response
+                    mode: 'no-cors'
                 });
+                console.log('✅ Message sent to Discord (no-cors mode)');
                 
-                console.log('Success: Message sent to Discord!');
+                // Also try logging locally to verify function runs
+                console.log('📝 Message content:', message);
                 return true;
             } catch (error) {
-                console.log('Error:', error);
-                return false;
+                console.error('❌ Discord webhook error:', error);
+                return false
             }
         }
 
